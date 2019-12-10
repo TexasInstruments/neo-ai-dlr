@@ -9,6 +9,10 @@ On X86_64 targets running Linux, you can install latest release of DLR package v
 
 For installation of DLR on non-x86 edge devices, or building DLR from source, please refer to [Installing DLR](https://neo-ai-dlr.readthedocs.io/en/latest/install.html)
 
+In certain cases, temporarily (during upgrades), it might be necessary to update the submodules with most recent versions.
+Following step should resolve that (issued from top level neo-ai-dlr folder):
+git submodule update --init --recursive --remote
+
 ## Documentation
 For instructions on using DLR, please refer to [Amazon SageMaker Neo – Train Your Machine Learning Models Once, Run Them Anywhere](https://aws.amazon.com/blogs/aws/amazon-sagemaker-neo-train-your-machine-learning-models-once-run-them-anywhere/)
 
@@ -22,4 +26,4 @@ We prepared several examples demonstrating how to use DLR API on different platf
 
 ## License
 
-This library is licensed under the Apache License Version 2.0. 
+This library is licensed under the Apache License Version 2.0.
