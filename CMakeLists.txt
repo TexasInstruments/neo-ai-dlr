@@ -51,6 +51,7 @@ option(USE_OPENCL  "Build with OpenCL" OFF)
 option(USE_CUDA  "Build with CUDA" OFF)
 option(USE_CUDNN "Build with CUDNN" OFF)
 option(USE_TENSORRT "Build with Tensor RT" OFF)
+option(USE_OPENCV "Build demos with OpenCV" ON)
 
 
 # Use RPATH on Mac OS X as flexible mechanism for locating dependencies
@@ -63,6 +64,7 @@ set(python-build "bp3-python setup.py build")
 # User can set this to OFF to build static libraries instead.
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(TEST_COVERAGE "C++ test coverage" OFF)
+option(GOOGLE_TEST "Include Googletest support" OFF)
 
 # Compiler flags
 set(CMAKE_CXX_STANDARD 11)
@@ -97,6 +99,7 @@ FILE(GLOB DLR_SRC
     ${TVM_SRC}/src/runtime/dso_module.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
     ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
+    ${TVM_SRC}/src/contrib/tidl/tidl.cc
 )
 
 if(USE_OPENCL)
@@ -293,8 +296,28 @@ foreach(__srcpath ${DEMO_SRCS})
 endforeach()
 add_custom_target(demo DEPENDS ${DEMO_EXECS})
 
+# Demos using OpenCV
+if (USE_OPENCV)
+  set(DEMOCV_EXECS "")
+  file(GLOB DEMOCV_SRCS demo/cv/*.cc)
+
+  foreach(__srcpath ${DEMOCV_SRCS})
+    get_filename_component(__srcname ${__srcpath} NAME)
+    string(REPLACE ".cc" "" __execname ${__srcname})
+    list(APPEND DEMOCV_EXECS ${__execname})
+    add_executable(${__execname} ${__srcpath} $<TARGET_OBJECTS:objdlr>)
+    target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread -lopencv_highgui -lopencv_imgcodecs -lopencv_videoio -lopencv_imgproc -lopencv_core)     
+    set_output_directory(${__execname} ${CMAKE_BINARY_DIR}/bin)
+    set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_ALL 1)
+    set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+  endforeach()
+  add_custom_target(democv DEPENDS ${DEMOCV_EXECS})
+else (USE_OPENCV)
+  message(STATUS "OpenCV dependent demos not supported!")
+endif ()
+
 # Tests
-if(NOT(ANDROID_BUILD OR AAR_BUILD))
+if(GOOGLE_TEST AND NOT(ANDROID_BUILD OR AAR_BUILD))
   include(cmake/googletest.cmake)
   fetch_googletest(
     ${PROJECT_SOURCE_DIR}/cmake
