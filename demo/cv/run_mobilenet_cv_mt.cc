@@ -97,8 +97,8 @@ bool SetupInput(const char *video_clip)
 
    return true;
 }
-//=========================================================================================
-
+/*! \brief Image preprocessing for TF model
+ */
 void ImagePreprocessing(Mat &image, float *output_data) {
 Mat spl[3];
   split(image,spl);
@@ -120,7 +120,8 @@ Mat spl[3];
   }
 }
 
-//=========================================================================================
+/*! \brief Do inference on acquired images
+ */
 void ProcessFrames(void) {
 Mat frame[BATCH_SIZE], bigFrame[BATCH_SIZE];
 std::vector<int64_t> output_sizes;
@@ -265,9 +266,8 @@ double fp_ms_avg = 0.0; //Initial inference time
 	std::cout << "processFrame: esc key is pressed by user" << std::endl;
 	return;
 }
-//=========================================================================================
-// Thread to capture images from camera, or do video clip decoding
-//=========================================================================================
+/*! \brief Thread to capture images from camera, or do video clip decoding
+ */
 void CollectFrames(void) {
 	Mat frame;
         char tmp_string[160];
@@ -330,10 +330,8 @@ bool is_big_endian() {
   // big endian if true
   return (*(char *)&n == 0);
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------
-/*
-* It will iterate through all the lines in file and put them in given vector
-*/
+/*! \brief Get all class labels from the provided file (one per line)
+ */
 bool getFileContent(std::string fileName, std::vector<std::string> & vecOfStrs)
 {
   // Open the File
