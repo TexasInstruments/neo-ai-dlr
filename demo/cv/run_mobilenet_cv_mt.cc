@@ -27,6 +27,8 @@ using namespace cv;
 #define RES_X 224
 #define RES_Y 224
 #define BATCH_SIZE 4
+#define NUM_CHANNELS 3
+
 VideoCapture cap;
 DLRModelHandle model;
 char dlr_model[320];
@@ -100,10 +102,10 @@ bool SetupInput(const char *video_clip)
 /*! \brief Image preprocessing for TF model
  */
 void ImagePreprocessing(Mat &image, float *output_data) {
-Mat spl[3];
+  Mat spl[NUM_CHANNELS];
   split(image,spl);
 
-  for(int c = 0; c < 3; c++)
+  for(int c = 0; c < NUM_CHANNELS; c++)
   {
      const unsigned char* data = spl[c].ptr();
      for(int y = 0; y < RES_Y; y++)
@@ -114,7 +116,7 @@ Mat spl[3];
          in -= 128;
          if(in > 127)  in  = 127;
          if(in < -128) in = -128;
-         output_data[3 * (y*RES_X + x) + 3 - c] = (float)in / 128.0;
+         output_data[NUM_CHANNELS * (y*RES_X + x) + NUM_CHANNELS-1 - c] = (float)in / 128.0;
        }
      }
   }
@@ -129,8 +131,8 @@ int frame_cnt = 0;
 char tmp_string[160];
 int num_outputs;
 const int batch_size = BATCH_SIZE;
-float *input_data = (float *)malloc(batch_size * RES_X * RES_Y * 3 * sizeof(float));
-int64_t image_shape[4] = { batch_size, RES_Y, RES_X, 3 };
+float *input_data = (float *)malloc(batch_size * RES_X * RES_Y * NUM_CHANNELS * sizeof(float));
+int64_t image_shape[4] = { batch_size, RES_Y, RES_X, NUM_CHANNELS };
 double fp_ms_avg = 0.0; //Initial inference time
 
     GetDLRNumOutputs(&model, &num_outputs);
@@ -148,7 +150,7 @@ double fp_ms_avg = 0.0; //Initial inference time
     }
     //First inference is dummy, initialization call!!
     std::cout << "DUMMY inference call (initialization) started...\n";
-    memset(input_data, 0, batch_size * RES_X * RES_Y * 3 * sizeof(float));
+    memset(input_data, 0, batch_size * RES_X * RES_Y * NUM_CHANNELS * sizeof(float));
     if (SetDLRInput(&model, input_name.c_str(), image_shape, input_data, 4) != 0) {
         throw std::runtime_error("Could not set input '" + input_name + "'");
     }
@@ -188,7 +190,7 @@ double fp_ms_avg = 0.0; //Initial inference time
 		    //----------------------------------OpenCV image manipulations---------------------------------------
                     for(int bcnt = 0; bcnt < BATCH_SIZE; bcnt ++)
                     {
-                       ImagePreprocessing(frame[bcnt], &input_data[3 * bcnt * RES_X * RES_Y]);
+                       ImagePreprocessing(frame[bcnt], &input_data[NUM_CHANNELS * bcnt * RES_X * RES_Y]);
                     }
                     if(do_inference)
                     {

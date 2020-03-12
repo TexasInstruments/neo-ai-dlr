@@ -21,6 +21,7 @@
 using namespace cv;
 #define RES_X 224
 #define RES_Y 224
+#define NUM_CHANNELS 3
 
 Mat image;
 
@@ -65,10 +66,10 @@ bool SetupInput(VideoCapture& cap, const char *video_clip)
 }
 
 void ImagePreprocessing(Mat &image, float *output_data) {
-Mat spl[3];
+  Mat spl[NUM_CHANNELS];
   split(image,spl);
 
-  for(int c = 0; c < 3; c++)
+  for(int c = 0; c < NUM_CHANNELS; c++)
   {
      const unsigned char* data = spl[c].ptr();
      for(int y = 0; y < RES_Y; y++)
@@ -79,7 +80,7 @@ Mat spl[3];
          in -= 128;
          if(in > 127)  in  = 127;
          if(in < -128) in = -128;
-         output_data[3 * (y*RES_X + x) + 3 - c] = (float)in / 128.0;
+         output_data[NUM_CHANNELS * (y*RES_X + x) + NUM_CHANNELS-1 - c] = (float)in / 128.0;
        }
      }
   }
@@ -132,7 +133,7 @@ void CollectFrames(VideoCapture &cap, const int numFrames, float *output_data, M
             } else {
               cv::resize(in_image, image, Size(RES_X,RES_Y));
             }
-            ImagePreprocessing(image, &output_data[3 * frame_cnt * RES_X * RES_Y]);
+            ImagePreprocessing(image, &output_data[NUM_CHANNELS * frame_cnt * RES_X * RES_Y]);
             frame_cnt ++;
         }
     } else {
@@ -159,7 +160,7 @@ bool RunInference(DLRModelHandle model, const char* data_path, const std::string
   int num_outputs;
   GetDLRNumOutputs(&model, &num_outputs);
   std::vector<int64_t> output_sizes;
-  float *input_data = (float *)malloc(batch_size * RES_X * RES_Y * 3 * sizeof(float));
+  float *input_data = (float *)malloc(batch_size * RES_X * RES_Y * NUM_CHANNELS * sizeof(float));
 
   // Setup Input
   VideoCapture cap;
@@ -180,7 +181,7 @@ bool RunInference(DLRModelHandle model, const char* data_path, const std::string
   int frame_batch_cnt = frame_cnt / batch_size; // How many batches to process?
   int frame_index = 0; 
   while(frame_batch_cnt >= 0) {
-    int64_t image_shape[4] = { batch_size, RES_Y, RES_X, 3 };
+    int64_t image_shape[4] = { batch_size, RES_Y, RES_X, NUM_CHANNELS };
     int argmax = -1;
     std::string last_label = "None";
 
