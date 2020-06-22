@@ -52,6 +52,7 @@ option(USE_OPENCL  "Build with OpenCL" OFF)
 option(USE_CUDA  "Build with CUDA" OFF)
 option(USE_CUDNN "Build with CUDNN" OFF)
 option(USE_TENSORRT "Build with Tensor RT" OFF)
+option(USE_TIDL "Build with TIDL" OFF)
 
 
 # Use RPATH on Mac OS X as flexible mechanism for locating dependencies
@@ -356,6 +357,11 @@ if(WITH_HEXAGON)
 endif()
 if(AAR_BUILD)
     list(APPEND DLR_SRC "src/jni/dlr_jni.cc")
+endif()
+if(USE_TIDL)
+    message("USING TIDL")
+    file(GLOB TIDL_RUNTIME_SRCS ${TVM_SRC}/src/runtime/contrib/tidl/*.cc)
+    list(APPEND DLR_SRC ${TIDL_RUNTIME_SRCS})
 endif()
 
 set(MAIN_EXEC "")
