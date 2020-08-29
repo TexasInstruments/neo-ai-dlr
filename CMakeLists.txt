@@ -117,6 +117,11 @@ FILE(GLOB DLR_SRC
     ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
 )
 
+if(USE_TIDL)
+    list(APPEND DLR_SRC ${TVM_SRC}/src/runtime/contrib/tidl/tidl_runtime.cc)
+    include_directories(${USE_TIDL_RT_PATH}/inc)
+endif(USE_TIDL)
+
 if(USE_OPENCL)
     message("USING OpenCL")
     if(USE_OPENCL STREQUAL "ON")
