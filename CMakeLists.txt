@@ -6,6 +6,7 @@ include(3rdparty/tvm/cmake/utils/FindCUDA.cmake)
 # Option for Android on Arm --- has to come before project() function
 option(ANDROID_BUILD "Build for Android target" OFF)
 option(AAR_BUILD "Build Android Archive (AAR)" OFF)
+option(USE_TESTS "Build tests" ON)
 
 if(ANDROID_BUILD)
     set(ANDROID_SYSROOT "${NDK_ROOT}/sysroot")
@@ -286,7 +287,7 @@ endforeach()
 add_custom_target(demo DEPENDS ${DEMO_EXECS})
 
 # Tests
-if(NOT(AAR_BUILD))
+if(NOT(AAR_BUILD) AND USE_TESTS)
   include(cmake/googletest.cmake)
   if (WIN32)
     include_directories(${DLFCN_WIN32}/src)
