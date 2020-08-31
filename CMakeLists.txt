@@ -418,7 +418,8 @@ endforeach()
 add_custom_target(demo DEPENDS ${DEMO_EXECS})
 
 # Tests
-if(NOT(AAR_BUILD))
+#if(NOT(AAR_BUILD))
+if(0)
   include(cmake/googletest.cmake)
   fetch_googletest(
     ${PROJECT_SOURCE_DIR}/cmake
