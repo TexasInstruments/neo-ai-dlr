@@ -14,6 +14,13 @@
 
 using namespace dlr;
 
+static inline void get_time_u64(uint64_t *t)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    *t = (uint64_t)ts.tv_sec * (uint64_t)1000000000ull + (uint64_t)ts.tv_nsec;
+}
+
 /* DLR C API implementation */
 
 extern "C" int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs) {
@@ -401,9 +408,34 @@ extern "C" int DeleteDLRModel(DLRModelHandle* handle) {
   API_END();
 }
 
+static inline void get_ddr_stats(DLRModel *model, uint64_t *read, uint64_t *write) {
+  void *out;
+  bool res = model->GetCustomData("tidl_get_custom_data_ddrstats", &out);
+  if(!res) {
+    *read = *write = 0;
+    return;
+  }
+  std::pair<uint64_t, uint64_t> *s = static_cast<std::pair<uint64_t, uint64_t>*>(out);
+  *read = s->first;
+  *write = s->second;
+  delete s;
+}
+
+
 extern "C" int RunDLRModel(DLRModelHandle* handle) {
   API_BEGIN();
-  static_cast<DLRModel*>(*handle)->Run();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  get_ddr_stats(model, &model->run_start_ddr_read, &model->run_start_ddr_write);
+  get_time_u64(&model->run_start_ts);
+  model->Run();
+  get_time_u64(&model->run_end_ts);
+  get_ddr_stats(model, &model->run_end_ddr_read, &model->run_end_ddr_write);
+
+  /* adjust for wrap around */
+  if(model->run_end_ddr_read < model->run_start_ddr_read)
+    model->run_end_ddr_read = (uint64_t)0xffffffffffffffffull + model->run_end_ddr_read;
+  if(model->run_end_ddr_write < model->run_start_ddr_write)
+    model->run_end_ddr_write = 0xffffffffffffffffull + model->run_end_ddr_write;
   API_END();
 }
 
@@ -467,5 +499,62 @@ extern "C" int SetDLRCustomAllocatorFree(DLRFreeFunctionPtr custom_free_fn) {
 extern "C" int SetDLRCustomAllocatorMemalign(DLRMemalignFunctionPtr custom_memalign_fn) {
   API_BEGIN();
   DLRAllocatorFunctions::SetMemalignFunction(custom_memalign_fn);
+  API_END();
+}
+
+extern "C" int GetDLRTIBenchmarkData(DLRModelHandle* handle, const char ***annotations,
+		uint64_t **vals, int *count) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+
+  /* clear out the past data */
+  model->benchmarks = std::vector<std::pair<std::string, uint64_t>>();
+
+  /* get the run duration */
+  model->benchmarks.push_back(std::make_pair<std::string, uint64_t>("ts:run_start", uint64_t(model->run_start_ts)));
+  model->benchmarks.push_back(std::make_pair<std::string, uint64_t>("ts:run_end", uint64_t(model->run_end_ts)));
+
+  /* get the ddr bw numbers */
+  model->benchmarks.push_back(std::make_pair<std::string, uint64_t>("ddr:read_start", uint64_t(model->run_start_ddr_read)));
+  model->benchmarks.push_back(std::make_pair<std::string, uint64_t>("ddr:read_end", uint64_t(model->run_end_ddr_read)));
+  model->benchmarks.push_back(std::make_pair<std::string, uint64_t>("ddr:write_start", uint64_t(model->run_start_ddr_write)));
+  model->benchmarks.push_back(std::make_pair<std::string, uint64_t>("ddr:write_end", uint64_t(model->run_end_ddr_write)));
+
+  /* get the timestamps for subgraphs */
+  void *out;
+  int subgraph_id = 0;
+  while(true) {
+      bool res = model->GetCustomData(("tidl_get_custom_data_" + std::to_string(subgraph_id)).c_str(), &out);
+      if(!res)
+          break;
+      std::vector<uint64_t> *v = static_cast<std::vector<uint64_t>*>(out);
+      std::string annots[] = {
+          "copy_in_start", "copy_in_end",
+          "proc_start", "proc_end",
+          "copy_out_start", "copy_out_end"
+      };
+      int index = 0;
+      for(auto it = v->begin(); it != v->end(); it++, index++)
+          model->benchmarks.push_back(std::make_pair<std::string, uint64_t>(
+                      "ts:subgraph_" + std::to_string(subgraph_id) + "_" + annots[index],
+                      uint64_t(*it)));
+      delete v;
+      subgraph_id++;
+  }
+
+  /* make unique pointers for returning and populate */
+  uint64_t *vals_ptr = (model->vals = std::make_unique<uint64_t[]>(model->benchmarks.size())).get();
+  const char **annotations_ptr = (model->annotations = std::make_unique<const char *[]>(model->benchmarks.size())).get();
+  for(auto it = model->benchmarks.begin(); it != model->benchmarks.end(); it++) {
+      *vals_ptr = (*it).second; vals_ptr++;
+      *annotations_ptr = (*it).first.c_str(); annotations_ptr++;
+  }
+
+  /* return */
+  *annotations = model->annotations.get();
+  *vals = model->vals.get();
+  *count = model->benchmarks.size();
+
   API_END();
 }

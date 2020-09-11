@@ -148,6 +148,10 @@ class DLR_DLL DLRModel {
   virtual const std::vector<int64_t>& GetInputShape(int index) const;
   virtual void GetInput(const char* name, void* input) = 0;
   virtual void SetInput(const char* name, const int64_t* shape, const void* input, int dim) = 0;
+  virtual bool GetCustomData(const char* name, void **out) {
+    LOG(ERROR) << "GetCustomData is not supported yet!";
+    return false;
+  };
 
   /* Output related functions */
   virtual int GetNumOutputs() { return num_outputs_; }
@@ -179,6 +183,12 @@ class DLR_DLL DLRModel {
   virtual bool HasMetadata() const;
   virtual void UseCPUAffinity(bool use) = 0;
   virtual void Run() = 0;
+
+  uint64_t run_start_ts, run_start_ddr_read, run_start_ddr_write;
+  uint64_t run_end_ts, run_end_ddr_read, run_end_ddr_write;
+  std::vector<std::pair<std::string, uint64_t>> benchmarks;
+  std::unique_ptr<const char *[]> annotations;
+  std::unique_ptr<uint64_t[]> vals;
 };
 
 typedef std::shared_ptr<DLRModel> DLRModelPtr;

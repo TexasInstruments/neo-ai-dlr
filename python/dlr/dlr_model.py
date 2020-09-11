@@ -1,6 +1,6 @@
 # coding: utf-8
 import ctypes
-from ctypes import c_void_p, c_int, c_char_p, byref, POINTER, c_longlong
+from ctypes import c_void_p, c_int, c_char_p, byref, POINTER, c_longlong, c_uint64
 import json
 import numpy as np
 import os
@@ -480,4 +480,20 @@ class DLRModelImpl(IDLRModel):
                                      c_char_p(name.encode('utf-8')),
                                      out.ctypes._as_parameter_))
         out = out.reshape(shape)
+        return out
+
+    def get_TI_benchmark_data(self):
+        count = c_int(0)
+        annotations = POINTER(c_char_p)()
+        vals = POINTER(c_uint64)()
+        self._check_call(self._lib.GetDLRTIBenchmarkData(byref(self.handle),
+                                        byref(annotations),
+                                        byref(vals),
+                                        byref(count)))
+        out = {}
+        for i in range(count.value):
+            key = annotations[i].decode()
+            assert key not in out.keys()
+            out[key] = vals[i]
+
         return out

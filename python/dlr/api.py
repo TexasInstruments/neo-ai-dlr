@@ -32,6 +32,10 @@ class IDLRModel:
     def run(self, input_data):
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def get_TI_benchmark_data(self):
+        raise NotImplementedError
+
 
 def _find_model_file(model_path, ext):
     if os.path.isfile(model_path) and model_path.endswith(ext):
@@ -291,4 +295,11 @@ class DLRModel(IDLRModel):
             return self._impl.get_output_dtype(index)
         except Exception as ex:
             self.neo_logger.exception("error in getting output data type {} {}".format(self._impl.__class__.__name__, ex))
+            raise ex
+
+    def get_TI_benchmark_data(self):
+        try:
+            return self._impl.get_TI_benchmark_data()
+        except Exception as ex:
+            self.neo_logger.exception("error in getting TI benchmark data \"{}\" {} {}".format(self._impl.__class__.__name__, ex))
             raise ex

@@ -251,6 +251,19 @@ void TVMModel::GetOutputShape(int index, int64_t* shape) const {
   std::memcpy(shape, outputs_[index]->shape, sizeof(int64_t) * outputs_[index]->ndim);
 }
 
+bool TVMModel::GetCustomData(const char *name, void **out)
+{
+  tvm::runtime::PackedFunc get_function = tvm_module_->GetFunction("get_custom_data");
+  CHECK(get_function != nullptr) << "Unsupported \"get_custom_data\"\n";
+
+  auto x = get_function(name, out);
+  if(x.type_code() == kTVMNullptr)
+    return false;
+
+  *out = x;
+  return true;
+}
+
 void TVMModel::GetOutput(int index, void* out) {
   DLTensor output_tensor = *outputs_[index];
   output_tensor.ctx = DLContext{kDLCPU, 0};

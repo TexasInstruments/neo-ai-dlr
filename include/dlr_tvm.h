@@ -49,6 +49,7 @@ class DLR_DLL TVMModel : public DLRModel {
                         int dim) override;
   void SetInputTensor(const char* name, DLTensor* tensor);
   void SetInputTensorZeroCopy(const char* name, DLTensor* tensor);
+  virtual bool GetCustomData(const char* name, void **out) override;
 
   virtual void GetOutput(int index, void* out) override;
   void GetOutputManagedTensorPtr(int index, const DLManagedTensor** out);

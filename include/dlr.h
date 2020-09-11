@@ -460,6 +460,9 @@ int SetDLRCustomAllocatorFree(DLRFreeFunctionPtr custom_free_fn);
 DLR_DLL
 int SetDLRCustomAllocatorMemalign(DLRMemalignFunctionPtr custom_memalign_fn);
 
+DLR_DLL
+int GetDLRTIBenchmarkData(DLRModelHandle* handle, const char ***annotations,
+		uint64_t **vals, int *count);
 /*! \} */
 
 #ifdef __cplusplus
