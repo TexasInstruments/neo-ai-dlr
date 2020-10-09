@@ -6,7 +6,7 @@ import glob
 import os
 import logging
 from .neologger import create_logger
-from .counter import call_phone_home
+#from .counter import call_phone_home
 
 
 # Interface
@@ -58,7 +58,7 @@ def _is_module_found(name):
 # Wrapper class
 class DLRModel(IDLRModel):
     
-    @call_phone_home
+    #@call_phone_home
     def __init__(self, model_path, dev_type=None, dev_id=None, error_log_file=None, use_default_dlr=False):
         """
         Load a Neo-compiled model.
