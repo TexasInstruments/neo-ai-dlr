@@ -245,6 +245,62 @@ add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
 add_library(objdlr OBJECT ${DLR_SRC})
 
+if(USE_REMOTE)
+    include_directories(${USE_TIIE_PATH})
+    add_custom_target(remote_header
+        COMMAND ${USE_TIIE_PATH}/parse_messages.py ${PROJECT_SOURCE_DIR}/src_remote/dlr_messages.yaml > ${PROJECT_SOURCE_DIR}/src_remote/dlr_messages.h
+        VERBATIM
+    )
+    file(GLOB DLR_CLIENT_SRC
+        src_remote/dlr_client.cc
+        src_remote/dlr_messages.cc
+    )
+    file(GLOB DLR_PLUGIN_SRC
+        src_remote/dlr_registry.cc
+        src_remote/dlr_messages.cc
+    )
+
+    set(PLUGIN "no")
+    set(CLIENT "no")
+    if(USE_REMOTE)
+        if(USE_REMOTE STREQUAL "ON")
+            set(PLUGIN "yes")
+            set(CLIENT "yes")
+        else()
+            if(USE_REMOTE MATCHES "PLUGIN")
+                set(PLUGIN "yes")
+            endif()
+            if(USE_REMOTE MATCHES "CLIENT")
+                set(CLIENT "yes")
+            endif()
+        endif()
+    endif()
+
+    if(CLIENT STREQUAL "yes")
+        add_library(clientdlr OBJECT ${DLR_CLIENT_SRC})
+        target_compile_options(clientdlr PRIVATE -fpermissive)
+        add_dependencies(clientdlr remote_header)
+
+        add_library(dlr_client SHARED $<TARGET_OBJECTS:clientdlr>)
+        set_output_directory(dlr_client ${CMAKE_BINARY_DIR}/libremote)
+        set_target_properties(dlr_client PROPERTIES LINKER_LANGUAGE CXX)
+        set_target_properties(dlr_client PROPERTIES OUTPUT_NAME dlr)
+        target_link_libraries(dlr_client -rdynamic -lstdc++fs -L${USE_TIIE_PATH} -lti_inference_client)
+    endif()
+
+    if(PLUGIN STREQUAL "yes")
+        add_library(plugindlr OBJECT ${DLR_PLUGIN_SRC})
+        target_compile_options(plugindlr PRIVATE -fpermissive)
+        add_dependencies(plugindlr remote_header)
+
+        add_library(dlr_plugin SHARED $<TARGET_OBJECTS:plugindlr> $<TARGET_OBJECTS:objdlr>)
+        set_output_directory(dlr_plugin ${CMAKE_BINARY_DIR}/libremote)
+        set_target_properties(dlr_plugin PROPERTIES LINKER_LANGUAGE CXX)
+        set_target_properties(dlr_plugin PROPERTIES OUTPUT_NAME dlr-ie-plugin)
+        target_link_libraries(dlr_plugin -rdynamic treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)
+    endif()
+endif(USE_REMOTE)
+
 #shared_library
 find_package(Threads)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)

@@ -1,0 +1,298 @@
+header : DLR_MESSAGES
+
+dlr_create_model:
+    comment: |
+        DLR_DLL
+        int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type,
+                           int dev_id);
+    resp:
+    - status: int32_t
+    - id: uint32_t
+    req:
+    - model_path: std::string
+    - dev_type: int32_t
+    - dev_id: int32_t
+
+dlr_delete_model:
+    comment: |
+        DLR_DLL
+        int DeleteDLRModel(DLRModelHandle* handle);
+    resp:
+    - status: int32_t
+    req:
+    - id: uint32_t
+
+dlr_run_model:
+    comment: |
+        DLR_DLL
+        int RunDLRModel(DLRModelHandle* handle);
+    resp:
+    - status: int32_t
+    req:
+    - id: uint32_t
+
+dlr_get_num_inputs:
+    comment: |
+        DLR_DLL
+        int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs);
+    resp:
+    - status: int32_t
+    - num: int32_t
+    req:
+    - id: uint32_t
+
+dlr_get_num_weights:
+    comment: |
+        DLR_DLL
+        int GetDLRNumWeights(DLRModelHandle* handle, int* num_weights);
+    resp:
+    - status: int32_t
+    - num: int32_t
+    req:
+    - id: uint32_t
+
+dlr_get_input_name:
+    comment: |
+        DLR_DLL
+        int GetDLRInputName(DLRModelHandle* handle, int index, const char** input_name);
+    resp:
+    - status: int32_t
+    - name: std::string
+    req:
+    - id: uint32_t
+    - index: int32_t
+
+dlr_get_input_type:
+    comment: |
+        DLR_DLL
+        int GetDLRInputType(DLRModelHandle* handle, int index, const char** input_type);
+    resp:
+    - status: int32_t
+    - type: std::string
+    req:
+    - id: uint32_t
+    - index: int32_t
+
+dlr_get_weight_name:
+    comment: |
+        DLR_DLL
+        int GetDLRWeightName(DLRModelHandle* handle, int index,
+                             const char** weight_name);
+    resp:
+    - status: int32_t
+    - name: std::string
+    req:
+    - id: uint32_t
+    - index: int32_t
+
+dlr_set_input:
+    comment: |
+        DLR_DLL
+        int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape,
+                        void* input, int dim);
+    resp:
+    - status: int32_t
+    req:
+    - id: uint32_t
+    - name: std::string 
+    - shape: std::vector<int64_t>
+    - input: std::vector<uint8_t>
+
+dlr_get_input:
+    comment: |
+        DLR_DLL
+        int GetDLRInput(DLRModelHandle* handle, const char* name, void* input);
+    resp:
+    - status: int32_t
+    - input: std::vector<uint8_t>
+    req:
+    - id: uint32_t
+    - name: std::string
+
+dlr_get_input_shape:
+    comment: |
+        DLR_DLL
+        int GetDLRInputShape(DLRModelHandle* handle, int index, int64_t* shape);
+    resp:
+    - status: int32_t
+    - shape: std::vector<int64_t>
+    req:
+    - id: uint32_t
+    - index: int32_t
+
+dlr_get_input_size_dim:
+    comment: |
+        DLR_DLL
+        int GetDLRInputSizeDim(DLRModelHandle* handle, int index, int64_t* size,
+                                int* dim);
+    resp:
+    - status: int32_t
+    - size: int64_t
+    - dim: int32_t
+    req:
+    - id: uint32_t
+    - index: int32_t
+
+dlr_get_output_shape:
+    comment: |
+        DLR_DLL
+        int GetDLROutputShape(DLRModelHandle* handle, int index, int64_t* shape);
+    resp:
+    - status: int32_t
+    - shape: std::vector<int64_t>
+    req:
+    - id: uint32_t
+    - index: int32_t
+
+dlr_get_output:
+    comment: |
+        DLR_DLL
+        int GetDLROutput(DLRModelHandle* handle, int index, void* out);
+    resp:
+    - status: int32_t
+    - out: std::vector<uint8_t>
+    req:
+    - id: uint32_t
+    - index: int32_t
+
+dlr_get_num_outputs:
+    comment: |
+        DLR_DLL
+        int GetDLRNumOutputs(DLRModelHandle* handle, int* num_outputs);
+    resp:
+    - status: int32_t
+    - num: int32_t
+    req:
+    - id: uint32_t
+
+dlr_get_output_size_dim:
+    comment: |
+        DLR_DLL
+        int GetDLROutputSizeDim(DLRModelHandle* handle, int index, int64_t* size,
+                                int* dim);
+    resp:
+    - status: int32_t
+    - size: int64_t
+    - dim: int32_t
+    req:
+    - id: uint32_t
+    - index: int32_t
+
+dlr_get_output_type:
+    comment: |
+        DLR_DLL
+        int GetDLROutputType(DLRModelHandle* handle, int index,
+                             const char** output_type);
+    resp:
+    - status: int32_t
+    - type: std::string
+    req:
+    - id: uint32_t
+    - index: int32_t
+
+dlr_get_has_metadata:
+    comment: |
+        DLR_DLL int GetDLRHasMetadata(DLRModelHandle* handle, bool* has_metadata);
+    resp:
+    - status: int32_t
+    - has_metadata: uint32_t
+    req:
+    - id: uint32_t
+
+dlr_get_output_name:
+    comment: |
+        DLR_DLL int GetDLROutputName(DLRModelHandle* handle, const int index, const char** name);
+    resp:
+    - status: int32_t
+    - name: std::string
+    req:
+    - id: uint32_t
+    - index: int32_t
+
+dlr_get_output_index:
+    comment: |
+        DLR_DLL int GetDLROutputIndex(DLRModelHandle* handle, const char* name, int* index);
+    resp:
+    - status: int32_t
+    - index: int32_t
+    req:
+    - id: uint32_t
+    - name: std::string
+
+dlr_get_output_by_name:
+    comment: |
+        DLR_DLL int GetDLROutputByName(DLRModelHandle* handle, const char* name, void* out);
+    resp:
+    - status: int32_t
+    - out: std::vector<uint8_t>
+    req:
+    - id: uint32_t
+    - name: std::string 
+
+dlr_get_last_error:
+    comment: |
+        DLR_DLL
+        const char* DLRGetLastError();
+    resp:
+    - error: std::string 
+    req:
+
+dlr_get_backend:
+    comment: |
+        DLR_DLL
+        int GetDLRBackend(DLRModelHandle* handle, const char** name);
+    resp:
+    - status: int32_t
+    - backend: std::string
+    req:
+    - id: uint32_t
+
+dlr_get_device_type:
+    comment: |
+        DLR_DLL
+        int GetDLRDeviceType(const char* model_path);
+    resp:
+    - status: int32_t
+    req:
+    - model_path: std::string
+
+dlr_get_version:
+    comment: |
+        DLR_DLL
+        int GetDLRVersion(const char** out);
+    resp:
+    - status: int32_t
+    - version: std::string
+    req:
+
+dlr_set_num_threads:
+    comment: |
+        DLR_DLL
+        int SetDLRNumThreads(DLRModelHandle* handle, int threads);
+    resp:
+    - status: int32_t
+    req:
+    - id: uint32_t
+    - threads: int32_t
+
+dlr_use_cpu_affinity:
+    comment: |
+        DLR_DLL
+        int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
+    resp:
+    - status: int32_t
+    req:
+    - id: uint32_t
+    - use: uint32_t
+
+dlr_get_ti_benchmark_data:
+    comment: |
+        DLR_DLL
+        int GetDLRTIBenchmarkData(DLRModelHandle* handle, const char ***annotations,
+        		uint64_t **vals, int *count);
+    resp:
+    - __skip_serialize__ 
+    - status: int32_t
+    - data: std::vector<std::pair<std::string, uint64_t>>
+    req:
+    - id: uint32_t
