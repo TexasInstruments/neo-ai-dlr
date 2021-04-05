@@ -4,7 +4,6 @@ from __future__ import absolute_import as _abs
 import abc
 import glob
 import os
-import logging
 from .neologger import create_logger
 #from .counter import call_phone_home
 
@@ -78,7 +77,7 @@ class DLRModel(IDLRModel):
             setting can override that behavior to use the system installed DLR when use_default_dlr
             is True.
         """
-        self.neo_logger = create_logger(log_level=logging.CRITICAL, log_file=error_log_file)
+        self.neo_logger = create_logger(log_file=error_log_file)
         try:
             # Find correct runtime implementation for the model
             self._model = model_path

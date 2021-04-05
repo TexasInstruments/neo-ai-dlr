@@ -5,7 +5,6 @@ import json
 import numpy as np
 import os
 import sys
-import logging
 from pathlib import Path
 
 from .api import IDLRModel
@@ -60,7 +59,7 @@ class DLRModelImpl(IDLRModel):
     
 
     def __init__(self, model_path, dev_type='cpu', dev_id=0, error_log_file=None, use_default_dlr=False):
-        self.logger = create_logger(log_level=logging.CRITICAL, log_file=error_log_file)
+        self.logger = create_logger(log_file=error_log_file)
         
         if not os.path.exists(model_path):
             raise ValueError("model_path %s doesn't exist" % model_path)
