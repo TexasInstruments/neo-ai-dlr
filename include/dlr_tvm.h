@@ -1,11 +1,15 @@
 #ifndef DLR_TVM_H_
 #define DLR_TVM_H_
 
-#include <graph/graph_runtime.h>
+#include <graph_executor/graph_executor.h>
 #include <tvm/runtime/memory.h>
 #include <tvm/runtime/registry.h>
 
 #include "dlr_common.h"
+
+#ifdef ENABLE_DATATRANSFORM
+#include "dlr_data_transform.h"
+#endif
 
 #if defined(_MSC_VER) || defined(_WIN32)
 #define DLR_DLL __declspec(dllexport)
@@ -19,11 +23,17 @@ namespace dlr {
  */
 class DLR_DLL TVMModel : public DLRModel {
  private:
-  tvm::runtime::ObjectPtr<tvm::runtime::GraphRuntime> tvm_graph_runtime_;
+  tvm::runtime::ObjectPtr<tvm::runtime::GraphExecutor> tvm_graph_executor_;
   std::shared_ptr<tvm::runtime::Module> tvm_module_;
-  std::vector<const DLTensor*> outputs_;
+  std::vector<tvm::runtime::NDArray> inputs_;
+  std::vector<tvm::runtime::NDArray> outputs_;
   std::vector<std::string> output_types_;
   std::vector<std::string> weight_names_;
+
+#ifdef ENABLE_DATATRANSFORM
+  DataTransform data_transform_;
+#endif
+
   void SetupTVMModule(const std::vector<std::string>& files);
   void SetupTVMModule(const std::vector<DLRModelElem>& model_elems);
   void UpdateInputShapes();
@@ -31,12 +41,12 @@ class DLR_DLL TVMModel : public DLRModel {
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TVMModel(const std::vector<std::string>& files, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kTVM) {
+  explicit TVMModel(const std::vector<std::string>& files, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kTVM) {
     SetupTVMModule(files);
   }
-  explicit TVMModel(std::vector<DLRModelElem> model_elems, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kTVM) {
+  explicit TVMModel(std::vector<DLRModelElem> model_elems, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kTVM) {
     SetupTVMModule(model_elems);
   }
 
@@ -44,6 +54,7 @@ class DLR_DLL TVMModel : public DLRModel {
   virtual const int64_t GetInputSize(int index) const override;
   virtual const char* GetInputName(int index) const override;
   virtual const char* GetInputType(int index) const override;
+  virtual int GetNumInputs() const override;
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, const void* input,
                         int dim) override;

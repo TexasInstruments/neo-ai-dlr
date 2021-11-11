@@ -4,6 +4,7 @@
 #include <dlpack/dlpack.h>
 #include <dmlc/logging.h>
 
+#include <stdlib.h>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -50,7 +51,7 @@ DLTensor GetInputDLTensor(int ndim, int64_t* shape, const char* filename) {
   for (int i = 0; i < ndim; i++) img_size *= shape[i];
 
   DLTensor dltensor;
-  dltensor.ctx = {kDLCPU, 0};
+  dltensor.device = {kDLCPU, 0};
   dltensor.ndim = ndim;
   dltensor.shape = (int64_t*)alligned_malloc(ndim * sizeof(int64_t), 128);
   dltensor.strides = 0;
@@ -85,7 +86,7 @@ DLTensor GetEmptyDLTensor(int ndim, int64_t* shape, uint8_t dtype, uint8_t bits)
   for (int i = 0; i < ndim; i++) size *= shape[i];
 
   DLTensor dltensor;
-  dltensor.ctx = {kDLCPU, 0};
+  dltensor.device = {kDLCPU, 0};
   dltensor.ndim = ndim;
   dltensor.shape = (int64_t*)malloc(dltensor.ndim * sizeof(int64_t));
   dltensor.strides = 0;
@@ -102,6 +103,14 @@ DLTensor GetEmptyDLTensor(int ndim, int64_t* shape, uint8_t dtype, uint8_t bits)
 void DeleteDLTensor(DLTensor& dltensor) {
   free(dltensor.shape);
   free(dltensor.data);
+}
+
+int SetEnv(const char* key, const char* value) {
+#ifdef _WIN32
+  return static_cast<int>(_putenv_s(key, value));
+#else
+  return setenv(key, value, 1);
+#endif  // _WIN32
 }
 
 #endif

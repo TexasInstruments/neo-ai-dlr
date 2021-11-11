@@ -57,9 +57,9 @@ TEST(DLR, TestGetDLRWeightName) {
   auto model = GetDLRModel();
   const char* weight_name;
   EXPECT_EQ(GetDLRWeightName(&model, 0, &weight_name), 0);
-  EXPECT_STREQ(weight_name, "p0");
+  EXPECT_STREQ(weight_name, "p105");
   EXPECT_EQ(GetDLRWeightName(&model, 107, &weight_name), 0);
-  EXPECT_STREQ(weight_name, "p99");
+  EXPECT_STREQ(weight_name, "p76");
   DeleteDLRModel(&model);
 }
 
@@ -121,6 +121,7 @@ TEST(DLR, TestGetDLRNumOutputs) {
   int num_outputs;
   EXPECT_EQ(GetDLRNumOutputs(&model, &num_outputs), 0);
   EXPECT_EQ(num_outputs, 2);
+  DeleteDLRModel(&model);
 }
 
 TEST(DLR, TestGetDLROutputType) {
@@ -253,6 +254,7 @@ TEST(DLR, TestCreateFromPaths_TVM) {
     EXPECT_EQ(((float*)(output1_p->dl_tensor.data))[i], ((float*)(output1.data))[i]);
   }
 
+  output1_p->deleter(output1_p);
   DeleteDLTensor(output0);
   DeleteDLTensor(output1);
   DeleteDLTensor(input);
@@ -276,7 +278,7 @@ TEST(DLR, TestCreateFromPaths_RelayVM) {
   EXPECT_EQ(SetDLRInputTensor(&model, input_name, &input), 0);
 
   // run inference
-  EXPECT_EQ(RunDLRModel(&model), 0);
+  EXPECT_EQ(RunDLRModel(&model), 0) << DLRGetLastError();
 
   // output 3
   float output3_d[100];
@@ -297,6 +299,7 @@ TEST(DLR, TestCreateFromPaths_RelayVM) {
     EXPECT_EQ(((float*)(output3_p->dl_tensor.data))[i], ((float*)(output3.data))[i]);
   }
 
+  output3_p->deleter(output3_p);
   DeleteDLTensor(output3);
   DeleteDLTensor(input);
   DeleteDLRModel(&model);
@@ -378,9 +381,35 @@ TEST(DLR, TestSetInputTensorZeroCopy_TVM) {
     EXPECT_EQ(((float*)(output1_p->dl_tensor.data))[i], ((float*)(output1.data))[i]);
   }
 
+  output1_p->deleter(output1_p);
   DeleteDLTensor(output0);
   DeleteDLTensor(output1);
   DeleteDLTensor(input);
+  DeleteDLRModel(&model);
+}
+
+TEST(DLR, TestDLRInputOrder) {
+  DLRModelHandle model = nullptr;
+  const char* model_path = "./input_order";
+  int device_type = 1;  // cpu;
+  if (CreateDLRModel(&model, model_path, device_type, 0) != 0) {
+    LOG(INFO) << DLRGetLastError() << std::endl;
+    throw std::runtime_error("Could not load DLR Model");
+  }
+  const char* input_names[4];
+  const char* input_types[4];
+  for (int i = 0; i < 4; ++i) {
+    EXPECT_EQ(GetDLRInputName(&model, i, &input_names[i]), 0);
+    EXPECT_EQ(GetDLRInputType(&model, i, &input_types[i]), 0);
+  }
+  EXPECT_STREQ(input_names[0], "image");
+  EXPECT_STREQ(input_names[1], "transform");
+  EXPECT_STREQ(input_names[2], "bbox");
+  EXPECT_STREQ(input_names[3], "index");
+  EXPECT_STREQ(input_types[0], "float32");
+  EXPECT_STREQ(input_types[1], "float32");
+  EXPECT_STREQ(input_types[2], "float32");
+  EXPECT_STREQ(input_types[3], "int32");
   DeleteDLRModel(&model);
 }
 

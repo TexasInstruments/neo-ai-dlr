@@ -19,6 +19,10 @@ RUN apt-get update && \
     wget \
     curl \
     ca-certificates \
+    openssl \
+    libnettle6 \
+    libssl1.1 \
+    libzstd1 \
     && rm -rf /var/lib/apt/lists/* \
     && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /root/.cache/pip
@@ -41,6 +45,7 @@ RUN wget https://cmake.org/files/v3.17/cmake-3.17.2-Linux-x86_64.sh \
     && bash cmake-3.17.2-Linux-x86_64.sh --skip-license --prefix=/usr/local
 
 COPY CMakeLists.txt /workspace/
+COPY Config.cmake.in /workspace/
 COPY README.md /workspace/
 COPY include/ /workspace/include/
 COPY src/ /workspace/src/

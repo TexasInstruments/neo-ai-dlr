@@ -98,9 +98,9 @@ TEST(DLR, TestGetDLRWeightName) {
   auto model = GetDLRModel();
   const char* weight_name;
   EXPECT_EQ(GetDLRWeightName(&model, 0, &weight_name), 0);
-  EXPECT_STREQ(weight_name, "p0");
+  EXPECT_STREQ(weight_name, "p45");
   EXPECT_EQ(GetDLRWeightName(&model, 107, &weight_name), 0);
-  EXPECT_STREQ(weight_name, "p99");
+  EXPECT_STREQ(weight_name, "p72");
   DeleteDLRModel(&model);
 }
 
@@ -162,6 +162,7 @@ TEST(DLR, TestGetDLRNumOutputs) {
   int num_outputs;
   EXPECT_EQ(GetDLRNumOutputs(&model, &num_outputs), 0);
   EXPECT_EQ(num_outputs, 2);
+  DeleteDLRModel(&model);
 }
 
 TEST(DLR, TestGetDLROutputType) {
