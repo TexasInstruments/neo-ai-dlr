@@ -3,6 +3,7 @@
 
 #include <tvm/runtime/ndarray.h>
 
+#include <ctime>
 #include <nlohmann/json.hpp>
 
 #include "dlr_common.h"
@@ -11,9 +12,17 @@ namespace dlr {
 
 /*! \brief Base case for input transformers. */
 class DLR_DLL Transformer {
+ protected:
+  const tvm::runtime::NDArray empty_;
+
  public:
   virtual void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
                             tvm::runtime::NDArray& input_array) const = 0;
+
+  /*! \brief Helper function for TransformInput. Allocates NDArray to store mapped input data. */
+  virtual void InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                           DLDataType dtype, DLDevice dev,
+                           tvm::runtime::NDArray& input_array) const;
 };
 
 class DLR_DLL FloatTransformer : public Transformer {
@@ -36,21 +45,52 @@ class DLR_DLL CategoricalStringTransformer : public Transformer {
                     tvm::runtime::NDArray& input_array) const;
 };
 
+class DLR_DLL DateTimeTransformer : public Transformer {
+ private:
+  /*! \brief Number of columns defined by Autopilot Sagemaker-Scikit-Learn-Extension for
+   * DateTimeVectorizer */
+  const int kNumDateTimeCols = 7;
+
+  const std::vector<std::string> datetime_templates = {
+      "%h %dth, %Y, %I:%M:%S%p",
+      "%h %dth, %Y, %I:%M%p",
+      "%h %dth, %Y, %I%p",
+      "%Y-%m-%d %I:%M:%S%p",
+      "%Y-%m-%d %H:%M:%S+%Z",
+      "%Y-%m-%d %H:%M:%S-%Z ",
+      "%Y-%m-%d %H:%M:%S",
+      "%Y-%m-%d",
+      "%H:%M:%S+00",
+      "%H:%M:%S",
+  };
+
+  /*! \brief Convert a given string to an array of digits representing [WEEKDAY,
+   * YEAR, HOUR, MINUTE, SECOND, MONTH, WEEK_OF_YEAR*/
+  void DigitizeDateTime(std::string& input_string, std::vector<int64_t>& datetime_digits) const;
+
+  bool isLeap(int64_t year) const;
+
+  int64_t GetWeekNumber(std::tm tm) const;
+
+ public:
+  void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                    tvm::runtime::NDArray& input_array) const;
+
+  void InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                   DLDataType dtype, DLDevice dev, tvm::runtime::NDArray& input_array) const;
+};
+
 /*! \brief Handles transformations of input and output data. */
 class DLR_DLL DataTransform {
  private:
   /*! \brief When there is no mapping entry for TransformOutput, this value is used. */
-  const char* kUnknownLabel = "<unknown_label>";
+  const char* kUnknownLabel = "<unseen_label>";
 
   /*! \brief Buffers to store transformed outputs. Maps output index to transformed data. */
   std::unordered_map<int, std::string> transformed_outputs_;
 
   /*! \brief Helper function for TransformInput. Interpets 1-D char input as JSON. */
   nlohmann::json GetAsJson(const int64_t* shape, const void* input, int dim) const;
-
-  /*! \brief Helper function for TransformInput. Allocates NDArray to store mapped input data. */
-  tvm::runtime::NDArray InitNDArray(const nlohmann::json& input_json, DLDataType dtype,
-                                    DLContext ctx) const;
 
   const std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<Transformer>>>
   GetTransformerMap() const;
@@ -77,7 +117,7 @@ class DLR_DLL DataTransform {
    * for the model input.
    */
   void TransformInput(const nlohmann::json& metadata, const int64_t* shape, const void* input,
-                      int dim, const std::vector<DLDataType>& dtypes, DLContext ctx,
+                      int dim, const std::vector<DLDataType>& dtypes, DLDevice dev,
                       std::vector<tvm::runtime::NDArray>* tvm_inputs) const;
 
   /*! \brief Transform integer output using CategoricalString output DataTransform. When this map is

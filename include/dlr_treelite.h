@@ -22,7 +22,8 @@ struct TreeliteInput {
   std::vector<size_t, DLRAllocator<size_t>> row_ptr;
   size_t num_row;
   size_t num_col;
-  CSRBatchHandle handle;
+  DMatrixHandle handle = nullptr;
+  ~TreeliteInput();
 };
 
 /*! \brief Get the paths of the Treelite model files.
@@ -46,14 +47,16 @@ class DLR_DLL TreeliteModel : public DLRModel {
   size_t treelite_output_size_;
   std::unique_ptr<TreeliteInput> treelite_input_;
   std::vector<float, DLRAllocator<float>> treelite_output_;
+  /*! \brief Whether input is sparse (zero values should be skipped) */
+  bool has_sparse_input_;
   void SetupTreeliteModule(const std::vector<std::string>& files);
   void UpdateInputShapes();
 
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TreeliteModel(const std::vector<std::string>& files, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kTREELITE) {
+  explicit TreeliteModel(const std::vector<std::string>& files, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kTREELITE) {
     SetupTreeliteModule(files);
   }
 

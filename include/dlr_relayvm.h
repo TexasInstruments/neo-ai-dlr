@@ -2,7 +2,8 @@
 #define DLR_RELAYVM_H_
 
 #include <dlpack/dlpack.h>
-#include <tvm/runtime/container.h>
+#include <tvm/runtime/container/adt.h>
+#include <tvm/runtime/container/shape_tuple.h>
 #include <tvm/runtime/module.h>
 #include <tvm/runtime/ndarray.h>
 #include <tvm/runtime/object.h>
@@ -11,7 +12,10 @@
 #include <tvm/runtime/vm/vm.h>
 
 #include "dlr_common.h"
+
+#ifdef ENABLE_DATATRANSFORM
 #include "dlr_data_transform.h"
+#endif
 
 #ifdef _WIN32
 #define LIBEXT ".dll"
@@ -43,7 +47,13 @@ class DLR_DLL RelayVMModel : public DLRModel {
   tvm::runtime::ObjectRef output_ref_;
   std::vector<tvm::runtime::NDArray> outputs_;
   std::vector<std::vector<int64_t>> output_shapes_;
+  const tvm::runtime::NDArray empty_;
+  tvm::runtime::vm::AllocatorType allocator_type_;
+
+#ifdef ENABLE_DATATRANSFORM
   DataTransform data_transform_;
+#endif
+
   void SetupVMModule(const std::vector<std::string>& paths);
   void SetupVMModule(const std::vector<DLRModelElem>& model_elems);
   void FetchInputNodesData();
@@ -53,14 +63,16 @@ class DLR_DLL RelayVMModel : public DLRModel {
   DLDataType GetInputDLDataType(int index);
 
  public:
-  explicit RelayVMModel(const std::vector<std::string>& files, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kRELAYVM) {
+  explicit RelayVMModel(const std::vector<std::string>& files, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kRELAYVM),
+        allocator_type_(tvm::runtime::vm::AllocatorType::kPooled) {
     SetupVMModule(files);
     FetchInputNodesData();
     FetchOutputNodesData();
   }
-  explicit RelayVMModel(std::vector<DLRModelElem> model_elems, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kRELAYVM) {
+  explicit RelayVMModel(std::vector<DLRModelElem> model_elems, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kRELAYVM),
+        allocator_type_(tvm::runtime::vm::AllocatorType::kPooled) {
     SetupVMModule(model_elems);
     FetchInputNodesData();
     FetchOutputNodesData();
@@ -89,6 +101,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   void GetOutputTensor(int index, DLTensor* out);
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
+  tvm::runtime::vm::AllocatorType GetAllocatorType();
 
   /*
     Following methods use metadata file to lookup input and output names.

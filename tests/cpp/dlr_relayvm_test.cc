@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include <nlohmann/json.hpp>
+
 #include "test_utils.hpp"
 
 int main(int argc, char** argv) {
@@ -25,10 +27,10 @@ class RelayVMTest : public ::testing::Test {
   RelayVMTest() {
     const int device_type = kDLCPU;
     const int device_id = 0;
-    DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
+    DLDevice dev = {static_cast<DLDeviceType>(device_type), device_id};
     std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
     std::vector<std::string> files = dlr::FindFiles(paths);
-    model = new dlr::RelayVMModel(files, ctx);
+    model = new dlr::RelayVMModel(files, dev);
   }
 
   ~RelayVMTest() { delete model; }
@@ -50,6 +52,8 @@ TEST_F(RelayVMTest, TestGetInputSize) { EXPECT_EQ(model->GetInputSize(0), 1 * 51
 TEST_F(RelayVMTest, TestGetInputDim) { EXPECT_EQ(model->GetInputDim(0), 4); }
 
 TEST_F(RelayVMTest, TestSetInput) {
+  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img.data(), input_dim));
+  // Second time should reuse same buffer.
   EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img.data(), input_dim));
 }
 
@@ -134,4 +138,46 @@ TEST_F(RelayVMTest, TestGetOutput) {
   for (int i = 0; i < 100; i++) {
     EXPECT_EQ(output3_p[i], output3[i]);
   }
+}
+
+TEST(DLR, TestRelayVMAllocatorDefault) {
+  DLDevice dev = {static_cast<DLDeviceType>(kDLCPU), 0};
+  std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, dev);
+
+  EXPECT_EQ(model->GetAllocatorType(), tvm::runtime::vm::AllocatorType::kPooled);
+
+  delete model;
+}
+
+TEST(DLR, TestRelayVMAllocatorEnvVar) {
+  EXPECT_EQ(SetEnv("DLR_RELAYVM_ALLOCATOR", "naive"), 0);
+  DLDevice dev = {static_cast<DLDeviceType>(kDLCPU), 0};
+  std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, dev);
+
+  EXPECT_EQ(model->GetAllocatorType(), tvm::runtime::vm::AllocatorType::kNaive);
+
+  delete model;
+  EXPECT_EQ(SetEnv("DLR_RELAYVM_ALLOCATOR", ""), 0);
+}
+
+TEST(DLR, TestRelayVMAllocatorFromMetadata) {
+  DLDevice dev = {static_cast<DLDeviceType>(kDLCPU), 0};
+  std::string ro_file = "./ssd_mobilenet_v1/code.ro";
+  std::string so_file = "./ssd_mobilenet_v1/compiled.so";
+  std::string meta_file = "./ssd_mobilenet_v1/compiled.meta";
+  std::ifstream ifs(meta_file);
+  nlohmann::json metadata = nlohmann::json::parse(ifs);
+  metadata["Model"]["RelayVMAllocator"] = "naive";
+  std::string meta_str = metadata.dump();
+  std::vector<DLRModelElem> model_elems = {
+      {DLRModelElemType::RELAY_EXEC, ro_file.c_str(), nullptr, 0},
+      {DLRModelElemType::TVM_LIB, so_file.c_str(), nullptr, 0},
+      {DLRModelElemType::NEO_METADATA, nullptr, meta_str.c_str(), meta_str.size()}};
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(model_elems, dev);
+  EXPECT_EQ(model->GetAllocatorType(), tvm::runtime::vm::AllocatorType::kNaive);
+  delete model;
 }
