@@ -1,4 +1,5 @@
 import os
+import shutil
 import io
 import sys
 from setuptools import setup, find_packages
@@ -21,10 +22,14 @@ elif sys.platform == 'darwin':
 
 LIB_PATH = os.path.join(BUILD_DIR, libname)
 
+wheel_include_libs = False
 if os.path.exists(LIB_PATH):
   print("Found", libname, "at", LIB_PATH)
   include_package_data = True
   data_files = [('dlr', [LIB_PATH,])]
+  if "bdist_wheel" in sys.argv:
+    wheel_include_libs = True
+    data_files = None
 else:
   print(libname, "is not found!")
   print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -32,6 +37,12 @@ else:
   print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
   include_package_data = False
   data_files = None
+
+# For bdist_wheel only
+if wheel_include_libs:
+  with open("MANIFEST.in", "w") as fo:
+    shutil.copy(LIB_PATH, os.path.join(CURRENT_DIR, "dlr"))
+    fo.write("include dlr/%s\n" % libname)
 
 # fetch meta data
 METADATA_PY = os.path.abspath("./dlr/metadata.py")
@@ -69,3 +80,8 @@ setup(
     ],
     python_requires = '>=3.5',
 )
+
+if wheel_include_libs:
+  # Wheel cleanup
+  os.remove("MANIFEST.in")
+  os.remove("dlr/%s" % libname)
