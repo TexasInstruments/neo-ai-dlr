@@ -42,7 +42,10 @@ else:
 if wheel_include_libs:
   with open("MANIFEST.in", "w") as fo:
     shutil.copy(LIB_PATH, os.path.join(CURRENT_DIR, "dlr"))
+    shutil.copytree(os.path.join(CURRENT_DIR, "../include"),
+                    os.path.join(CURRENT_DIR, "dlr/include"))
     fo.write("include dlr/%s\n" % libname)
+    fo.write("recursive-include dlr/include *\n")
 
 # fetch meta data
 METADATA_PY = os.path.abspath("./dlr/metadata.py")
@@ -85,3 +88,4 @@ if wheel_include_libs:
   # Wheel cleanup
   os.remove("MANIFEST.in")
   os.remove("dlr/%s" % libname)
+  shutil.rmtree(os.path.join(CURRENT_DIR, "dlr/include"))
