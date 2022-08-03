@@ -118,6 +118,7 @@ FILE(GLOB DLR_SRC
     ${TVM_SRC}/src/runtime/dso_library.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
     ${TVM_SRC}/src/runtime/metadata_module.cc
+    ${TVM_SRC}/src/runtime/library_module.cc
     ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
 )
 
