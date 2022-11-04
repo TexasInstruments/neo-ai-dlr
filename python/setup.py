@@ -54,6 +54,13 @@ METADATA_BIN = open(METADATA_PY, "rb")
 exec(compile(METADATA_BIN.read(), METADATA_PY, 'exec'), METADATA_PATH, METADATA_PATH)
 METADATA_BIN.close()
 
+class BinaryDistribution(Distribution):
+    def has_ext_modules(self):
+        return True
+
+    def is_pure(self):
+        return False
+
 setup(
     name="dlr",
     version=METADATA_PATH['VERSION'],
@@ -70,11 +77,9 @@ setup(
 
     description = 'Common runtime for machine learning models compiled by \
         AWS SageMaker Neo, TVM, or TreeLite.',
-    long_description=io.open(os.path.join(CURRENT_DIR, '../README.md'), encoding='utf-8').read(),
+    long_description=io.open(os.path.join(CURRENT_DIR, '../README_TI.md'), encoding='utf-8').read(),
     long_description_content_type="text/markdown",
-    author = 'AWS Neo',
-    author_email = 'aws-neo-ai@amazon.com',
-    url='https://github.com/neo-ai/neo-ai-dlr',
+    url='https://github.com/TexasInstruments/neo-ai-dlr',
     license = "Apache-2.0",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -82,6 +87,7 @@ setup(
         "License :: OSI Approved :: Apache Software License",
     ],
     python_requires = '>=3.5',
+    distclass=BinaryDistribution,
 )
 
 if wheel_include_libs:
