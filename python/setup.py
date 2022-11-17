@@ -87,7 +87,7 @@ setup(
         "License :: OSI Approved :: Apache Software License",
     ],
     python_requires = '>=3.5',
-    distclass=BinaryDistribution,
+    #distclass=BinaryDistribution,
 )
 
 if wheel_include_libs:
