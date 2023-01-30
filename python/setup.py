@@ -44,6 +44,8 @@ if wheel_include_libs:
     shutil.copy(LIB_PATH, os.path.join(CURRENT_DIR, "dlr"))
     shutil.copytree(os.path.join(CURRENT_DIR, "../include"),
                     os.path.join(CURRENT_DIR, "dlr/include"))
+    shutil.copytree(os.path.join(CURRENT_DIR, "../3rdparty/tvm/3rdparty/dlpack/include/dlpack"),
+                    os.path.join(CURRENT_DIR, "dlr/include/dlpack"))
     fo.write("include dlr/%s\n" % libname)
     fo.write("recursive-include dlr/include *\n")
 
