@@ -11,12 +11,12 @@ RUN yum -y update && \
 
 # Python
 RUN yum install -y python3 && \
-    wget https://bootstrap.pypa.io/get-pip.py && \
+    wget https://bootstrap.pypa.io/pip/3.6/get-pip.py && \
     python3 get-pip.py
 
 # CMake
-RUN wget -nv -nc https://github.com/Kitware/CMake/releases/download/v3.18.4/cmake-3.18.4-Linux-x86_64.sh --no-check-certificate && \
-    bash cmake-3.18.4-Linux-x86_64.sh --skip-license --prefix=/usr
+RUN wget -nv -nc https://cmake.org/files/v3.21/cmake-3.21.4-linux-x86_64.sh --no-check-certificate && \
+    bash cmake-3.21.4-linux-x86_64.sh --skip-license --prefix=/usr
 
 # Install Python packages
 RUN pip3 install numpy pytest scipy scikit-learn setuptools wheel

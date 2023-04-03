@@ -88,8 +88,9 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
   vm_executable_ =
       std::make_shared<tvm::runtime::Module>(tvm::runtime::vm::Executable::Load(code_data, lib));
   auto vm = tvm::runtime::make_object<tvm::runtime::vm::VirtualMachine>();
-  vm->LoadExecutable(static_cast<tvm::runtime::vm::Executable*>(
-      const_cast<tvm::runtime::Object*>(vm_executable_->get())));
+  vm->LoadExecutable(tvm::runtime::GetObjectPtr<tvm::runtime::vm::Executable>(
+      static_cast<tvm::runtime::vm::Executable*>(
+          const_cast<tvm::runtime::Object*>(vm_executable_->get()))));
   vm_module_ = std::make_shared<tvm::runtime::Module>(tvm::runtime::Module(vm));
 
   tvm::runtime::PackedFunc init = vm_module_->GetFunction("init");
@@ -305,7 +306,9 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* 
 
   // Only allocate new buffer if not initialized or if shape or dtype has changed. Context will
   // always match.
-  if (inputs_[index] == empty_ || inputs_[index].Shape() != tvm::runtime::ShapeTuple(arr_shape) ||
+  if (inputs_[index] == empty_ ||
+      !std::equal(inputs_[index].Shape().begin(), inputs_[index].Shape().end(), arr_shape.begin(),
+                  arr_shape.end()) ||
       !TypeEqual(inputs_[index].DataType(), dtype)) {
     inputs_[index] = tvm::runtime::NDArray::Empty(arr_shape, dtype, dev_);
   }

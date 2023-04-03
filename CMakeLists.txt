@@ -17,7 +17,7 @@ if(ANDROID_BUILD)
     endif()
 endif(ANDROID_BUILD)
 
-project(dlr VERSION 1.10.0 LANGUAGES C CXX)
+project(dlr VERSION 1.13.0 LANGUAGES C CXX)
 
 message(STATUS "dlr version: ${dlr_VERSION}")
 
@@ -75,7 +75,7 @@ option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(TEST_COVERAGE "C++ test coverage" OFF)
 
 # Compiler flags
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # --exclude-libs is not available on Windows and macOS. As such, Windows and
 # Mac do not support the creation of multiple DLRModel instances (in Python) in
@@ -116,10 +116,11 @@ include_directories("${JSON_SRC}")
 FILE(GLOB DLR_SRC
     "src/*.cc"
     ${TVM_SRC}/src/runtime/dso_library.cc
+    ${TVM_SRC}/src/runtime/library_module.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
     ${TVM_SRC}/src/runtime/metadata_module.cc
-    ${TVM_SRC}/src/runtime/library_module.cc
     ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
+    ${TVM_SRC}/src/runtime/const_loader_module.cc
 )
 
 if(USE_TIDL)
@@ -183,7 +184,7 @@ if(USE_CUDA)
     cmake_minimum_required(VERSION 3.13) # to compile CUDA code
     set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)
     if(NOT DEFINED CMAKE_CUDA_STANDARD)
-      set(CMAKE_CUDA_STANDARD 14)
+      set(CMAKE_CUDA_STANDARD 17)
       set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     endif()
     enable_language(CUDA)
@@ -516,26 +517,26 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
   if(NOT IS_DIRECTORY ${XGBOOST_TEST_MODEL})
     file(MAKE_DIRECTORY ${XGBOOST_TEST_MODEL})
     download_file(
-      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/xgboost_test.tar.gz
-      /tmp/xgboost_test.tar.gz
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.10.0/xgboost-ml_m5.tar.gz
+      /tmp/xgboost-ml_m5.tar.gz
       SHA1
-      4c8ac5f20db6c7c6d674dd2ac9d9e14ce887281e
+      1e45bb9d6108d70ac4ff37855cf13061d61ef742
     )
     # this is OS-agnostic
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/xgboost_test.tar.gz
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/xgboost-ml_m5.tar.gz
                     WORKING_DIRECTORY ${XGBOOST_TEST_MODEL})
-    file(REMOVE /tmp/xgboost_test.tar.gz)
+    file(REMOVE /tmp/xgboost-ml_m5.tar.gz)
   endif()
 
-  set(RELAYVM_MODEL ssd_mobilenet_v1_ppn_shared_box_predictor_300x300_coco14_sync_2018_07_03-LINUX_X86_64.tar.gz)
+  set(RELAYVM_MODEL tf2_ssd_mobilenet_v1.tar.gz)
   set(RELAYVM_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/ssd_mobilenet_v1)
   if(NOT IS_DIRECTORY ${RELAYVM_MODEL_DIR})
     file(MAKE_DIRECTORY ${RELAYVM_MODEL_DIR})
     download_file(
-      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.5.0/${RELAYVM_MODEL}
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.13.0/${RELAYVM_MODEL}
       /tmp/${RELAYVM_MODEL}
       SHA1
-      49ddd9e815c6cc14ef0e9a594c8c2d0d129e5e91
+      e7b951ee10b715218bde4f39d3ee0e0c2588ceae
     )
     # this is OS-agnostic
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${RELAYVM_MODEL}

@@ -60,7 +60,7 @@ TEST(DLR, DataTransformCategoricalString) {
   EXPECT_EQ(transformed_data[0]->shape[0], 6);
   EXPECT_EQ(transformed_data[0]->shape[1], 1);
   for (size_t i = 0; i < expected_output.size(); ++i) {
-    CHECK_EQ(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i])
+    EXPECT_EQ(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i])
         << "Output at index " << i;
     ;
   }
@@ -225,7 +225,8 @@ TEST(DLR, DataTransformDateTime) {
   }
 }
 
-TEST(DLR, RelayVMDataTransformInput) {
+// temporarily disable test (TODO: generate new artifacts)
+TEST(DLR, DISABLED_RelayVMDataTransformInput) {
   DLDevice dev = {kDLCPU, 0};
   std::vector<std::string> paths = {"./automl"};
   std::vector<std::string> files = dlr::FindFiles(paths);
@@ -263,7 +264,7 @@ TEST(DLR, RelayVMDataTransformInput) {
   delete model;
 }
 
-TEST(DLR, RelayVMDataTransformOutput) {
+TEST(DLR, DISABLED_RelayVMDataTransformOutput) {
   DLDevice dev = {kDLCPU, 0};
   std::vector<std::string> paths = {"./inverselabel"};
   std::vector<std::string> files = dlr::FindFiles(paths);
