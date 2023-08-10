@@ -371,25 +371,25 @@ extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
     }
 }
 
-extern "C" int GetDLRDeviceType(const char* model_path) {
-    try {
-        roundtrip(dlr_get_device_type, std::string(model_path));
-        return resp.status(); 
-    } catch(std::exception &e) {
-        return -1;
-    }
-}
+//extern "C" int GetDLRDeviceType(const char* model_path) {
+//    try {
+//        roundtrip(dlr_get_device_type, std::string(model_path));
+//        return resp.status(); 
+//    } catch(std::exception &e) {
+//        return -1;
+//    }
+//}
 
-extern "C" int GetDLRVersion(const char** out) {
-    try {
-        roundtrip(dlr_get_version);
-        if(!resp.status())
-            *out = smart_strdup(resp.version().c_str());
-        return resp.status(); 
-    } catch(std::exception &e) {
-        return -1;
-    }
-}
+//extern "C" int GetDLRVersion(const char** out) {
+//    try {
+//        roundtrip(dlr_get_version);
+//        if(!resp.status())
+//            *out = smart_strdup(resp.version().c_str());
+//        return resp.status(); 
+//    } catch(std::exception &e) {
+//        return -1;
+//    }
+//}
 
 extern "C" int SetDLRNumThreads(DLRModelHandle* handle, int threads) {
     try {
