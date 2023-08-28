@@ -259,11 +259,13 @@ dlr_get_device_type:
 dlr_get_version:
     comment: |
         DLR_DLL
-        int GetDLRVersion(const char** out);
+        int GetDLRVersion(char** out);
+        Note: Added a dummy input to avoid disambiguated as a function declaration [-Wvexing-parse]
     resp:
     - status: int32_t
     - version: std::string
     req:
+    - dummy: int32_t
 
 dlr_set_num_threads:
     comment: |

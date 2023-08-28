@@ -371,25 +371,28 @@ extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
     }
 }
 
-//extern "C" int GetDLRDeviceType(const char* model_path) {
-//    try {
-//        roundtrip(dlr_get_device_type, std::string(model_path));
-//        return resp.status(); 
-//    } catch(std::exception &e) {
-//        return -1;
-//    }
-//}
+extern "C" int GetDLRDeviceType(const char* model_path) {
+    try {
+        std::string canonical_path = std::experimental::filesystem::canonical(model_path);
+        roundtrip(dlr_get_device_type, canonical_path);
+        return resp.status();
+    } catch(std::exception &e) {
+        return -1;
+    }
+}
 
-//extern "C" int GetDLRVersion(const char** out) {
-//    try {
-//        roundtrip(dlr_get_version);
-//        if(!resp.status())
-//            *out = smart_strdup(resp.version().c_str());
-//        return resp.status(); 
-//    } catch(std::exception &e) {
-//        return -1;
-//    }
-//}
+extern "C" int GetDLRVersion(const char** out) {
+    try {
+        //Getting error: conflicting declaration of C function when compiling with Ubuntu 22.04. Adding a dummy input to avoid warning: empty parentheses were disambiguated as a function declaration [-Wvexing-parse]
+        int32_t dummy =1;
+        roundtrip(dlr_get_version, dummy);
+        if(!resp.status())
+            *out = smart_strdup(resp.version().c_str());
+        return resp.status();
+    } catch(std::exception &e) {
+        return -1;
+    }
+}
 
 extern "C" int SetDLRNumThreads(DLRModelHandle* handle, int threads) {
     try {
